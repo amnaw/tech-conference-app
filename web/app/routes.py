@@ -2,7 +2,7 @@ from app import app, db, queue_client
 from datetime import datetime
 from app.models import Attendee, Conference, Notification
 from flask import render_template, session, request, redirect, url_for, flash, make_response, session
-from azure.servicebus import Message
+from azure.servicebus import ServiceBusMessage
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 import logging
@@ -64,13 +64,38 @@ def notification():
         notification.submitted_date = datetime.utcnow()
 
         try:
+            ## save the notification object
             db.session.add(notification)
             db.session.commit()
 
             ##################################################
-            ## TODO: Refactor This logic into an Azure Function
-            ## Code below will be replaced by a message queue
+            ## Queue the notification id,  for the Azure function to pick it up
+            ## Call servicebus queue_client to enqueue notification ID
             #################################################
+            enqueue_notification(notification.id)
+            #################################################
+
+            return redirect('/Notifications')
+        except :
+            logging.error('log unable to save notification')
+
+    else:
+        return render_template('notification.html')
+
+
+@app.route('/NotificationWithSENDGRID', methods=['POST', 'GET'])
+def notificationSENDGRID():
+    if request.method == 'POST':
+        notification = Notification()
+        notification.message = request.form['message']
+        notification.subject = request.form['subject']
+        notification.status = 'Notifications submitted'
+        notification.submitted_date = datetime.utcnow()
+
+        try:
+            db.session.add(notification)
+            db.session.commit()
+
             attendees = Attendee.query.all()
 
             for attendee in attendees:
@@ -80,11 +105,6 @@ def notification():
             notification.completed_date = datetime.utcnow()
             notification.status = 'Notified {} attendees'.format(len(attendees))
             db.session.commit()
-            # TODO Call servicebus queue_client to enqueue notification ID
-
-            #################################################
-            ## END of TODO
-            #################################################
 
             return redirect('/Notifications')
         except :
@@ -105,3 +125,11 @@ def send_email(email, subject, body):
 
         sg = SendGridAPIClient(app.config.get('SENDGRID_API_KEY'))
         sg.send(message)
+
+
+def enqueue_notification(message):
+    # create a Service Bus message
+    message = Message(message)
+    # send the message to the queue
+    queue_client.send_messages(message)
+
