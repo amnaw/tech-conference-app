@@ -27,7 +27,7 @@ def main(msg: func.ServiceBusMessage):
 
         # connection = psycopg2.connect(**pg_connection_dict)
         connection = psycopg2.connect(conStr)
-        logging.info('********* connection successfully done!')  
+        logging.info('********* Connection successfully done!')  
 
 
         # Create a cursor to perform database operations
@@ -44,8 +44,8 @@ def main(msg: func.ServiceBusMessage):
         # Fetch result
         record = cursor.fetchone()
         while record is not None:
-            notification_message = record['message']
-            notification_subject = record['subject']    
+            notification_message = record[2]
+            notification_subject = record[5]    
 
         logging.info('********* notification :: ')
         logging.info('notification_message: %s', notification_message)  
