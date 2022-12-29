@@ -32,20 +32,23 @@ def main(msg: func.ServiceBusMessage):
 
         # Create a cursor to perform database operations
         cursor = connection.cursor()
+
         # Executing a SQL query
-        cursor.execute("""
-          SELECT * 
-          FROM notification n
-          WHERE n.id = %s;
-          """,
-          [notification_id,])
+        cursor.execute("""SELECT message, subject FROM notification WHERE id = %s""",
+          [notification_id])
+        
+        logging.info('********* notification :: Executing a SQL query')
+       
 
         # TODO: Get notification message and subject from database using the notification_id
         # Fetch result
         record = cursor.fetchone()
-        while record is not None:
-            notification_message = record[2]
-            notification_subject = record[5]    
+
+        notification_message = ""
+        notification_subject = ""
+
+        notification_message = record[0]
+        notification_subject = record[1]    
 
         logging.info('********* notification :: ')
         logging.info('notification_message: %s', notification_message)  
@@ -58,15 +61,28 @@ def main(msg: func.ServiceBusMessage):
           """)
 
         records = cursor.fetchall()
+        logging.info('********* attendee :: Executing a SQL query')
 
         # TODO: Loop through each attendee and send an email with a personalized subject
         for record in records:
-            notification_subject = 'Hi ' + record['first_name'] + ' ' + record['last_name'] + ', ' + notification_subject
+            notification_subject = 'Hi ' + record[1] + ' ' + record[2] + ', ' + notification_subject
             # TODO: sendGrid logic
-            logging.info('********* send_email Started !')  
-            send_email(record['email'], notification_subject, notification_message)
+            logging.info('********* send_email Started !')
+            logging.info(notification_subject) 
+            logging.info('********* email :: ') 
+            logging.info(record[5])  
+            send_email(record[5], notification_subject, notification_message)
 
         # TODO: Update the notification table by setting the completed date and updating the status with the total number of attendees notified
+        cursor.execute("""SELECT COUNT(*) FROM attendee""")
+        count = cursor.fetchone()
+        status = 'Notified ' + str(count[0]) + ' attendees'
+        cursor.execute("""UPDATE notification SET completed_date = %s, status = %s WHERE id = %s""",
+          (datetime.utcnow(), status, notification_id))
+        connection.commit()
+        
+        logging.info('********* count :: ') 
+        logging.info(status) 
 
     except (Exception, psycopg2.DatabaseError) as error:  
         logging.info('********* ERROR : ')  
@@ -87,8 +103,10 @@ def send_email(email, subject, body):
             to_emails=email,
             subject=subject,
             plain_text_content=body)
-
+                
         sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+        logging.info('********* sendgrid send started') 
         sg.send(message)
-        logging.info('********* Message has been sent !')  
+        logging.info('********* Message has been sent !') 
+
         
