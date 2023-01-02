@@ -58,14 +58,37 @@ You will need to install the following locally:
    - The notification method on POST should save the notification object and queue the notification id for the function to pick it up
 2. Re-deploy the web app to publish changes
 
-## Monthly Cost Analysis
-Complete a month cost analysis of each Azure resource to give an estimate total cost using the table below:
+## Cost-effective architecture for web app and function
+## _Architecture Explanation_
 
+#### Azure Web App
+For this particular project Azure web app is considered to be an easier approach to facilitate the migration process. 
+Since there no special deployment, networking, governance and compliance requirements PaaS solution like web app is the first option.
+Another good point to consider, Azure web app can easily integrate with other azure solutions like Azure Service Bus to queue the notifications, 
+and Azure Postgres server.
+In terms of costs, there are many payment options, the most common is consumption based.
+The pricing tier of an App Service plan determines the App Service specifications and price.
+
+#### Azure Function
+Server less solution like Azure Function is the optimal choice in this scenario, since the application needs to run a background job to 
+process asynchronous long-running workloads like sending emails.
+Azure Functions allows you to focus only on the job logic, and maintain less infrastructure, you only need to integrate the function with needed Azure recourse
+like Azure service bus and Postgres server.
+with Azure Functions only pay for the used resources, there is no charges when the function is idle.
+also the pricing models are flexible as you can use consumption plan or App Service plan.
+
+
+## _Monthly Cost Analysis_
+Note: the following price is estimated by [Azure pricing calculator](https://azure.microsoft.com/en-us/pricing/calculator/?&ef_id=CjwKCAiA-8SdBhBGEiwAWdgtcHI09_68WBYFrhGV_8MXt2zrbY_eGNgMinY6ozJSrn_8upQ08l4OQBoCYjIQAvD_BwE:G:s&OCID=AIDcmmk62dhxg3_SEM_CjwKCAiA-8SdBhBGEiwAWdgtcHI09_68WBYFrhGV_8MXt2zrbY_eGNgMinY6ozJSrn_8upQ08l4OQBoCYjIQAvD_BwE:G:s&gclid=CjwKCAiA-8SdBhBGEiwAWdgtcHI09_68WBYFrhGV_8MXt2zrbY_eGNgMinY6ozJSrn_8upQ08l4OQBoCYjIQAvD_BwE) based on many variables like region and execution times.  
 | Azure Resource | Service Tier | Monthly Cost |
-| ------------ | ------------ | ------------ |
-| *Azure Postgres Database* |     |              |
-| *Azure Service Bus*   |         |              |
-| ...                   |         |              |
+| ------ | ------ |------ |
+| Azure Postgres Server | Basic 2 vCore | $49.64
+| Azure Service Bus | Basic | $0.05 per million operations 
+| Azure Web App | Basic | $12.41
+| Azure Function | Consumption tier, Pay as you go, 128 MB memory | $0.20
+| Azure Storage Account | Block Blob Storage, General Purpose V2, Hot Access Tier, Pay as you go | $20.80
+|  |  | **Total**
+|  |  | $83.10
 
-## Architecture Explanation
-This is a placeholder section where you can provide an explanation and reasoning for your architecture selection for both the Azure Web App and Azure Function.
+
+
