@@ -1,4 +1,5 @@
 ##### Application Workflow after the migration to Azure:
+
 1- Web app send Notification to Service Bus queue
 2- Function gets triggered when Bus recieve new message
 3- Function processes the message which is the notification id
